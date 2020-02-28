@@ -2,6 +2,8 @@ package com.example.bob.smilefun.utils;
 
 import com.example.bob.smilefun.R;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 public class ImageUtil {
@@ -32,13 +34,19 @@ public class ImageUtil {
     private int bingoIndex;
     private boolean bingo;
     private int resId;
+    private List<Integer> saveIds;
+
+    public ImageUtil() {
+        saveIds=new ArrayList<>();
+    }
+
     public void beginCalculate(int count){
         this.count=count;
         bingoIndex=random(count);
     }
 
     public void endCalculate(){
-
+        saveIds.clear();
     }
 
     public void calculate(){
@@ -46,9 +54,12 @@ public class ImageUtil {
             bingo=true;
             resId= smileRes[random(100)];
         }else {
-           resId= angryRes[random(50)];
-           bingo=false;
+            do {
+                resId= angryRes[random(50)];
+            }while (saveIds.contains(resId));
+            bingo=false;
         }
+        saveIds.add(resId);
     }
 
     public int getResId(){

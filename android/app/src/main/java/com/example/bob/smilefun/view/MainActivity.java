@@ -7,12 +7,12 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 
 import com.example.bob.smilefun.R;
-import com.example.bob.smilefun.db.GameSetting;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final int REQUEST_GAME=101;
-    private static final int REQUEST_SETTING=102;
+    private static final int REQUEST_READ=101;
+    private static final int REQUEST_GAME=102;
+    private static final int REQUEST_SETTING=103;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,6 +28,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void clickGameInfo(View view) {
+        Intent intent=new Intent(this, ReadActivity.class);
+        startActivityForResult(intent, REQUEST_READ);
     }
 
     public void clickStartGame(View view) {

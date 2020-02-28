@@ -4,24 +4,23 @@ import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
+import com.example.bob.smilefun.R;
+import com.example.bob.smilefun.db.GameSetting;
 import com.example.bob.smilefun.utils.ImageUtil;
 import com.example.bob.smilefun.utils.MeasureUtil;
-import com.example.bob.smilefun.R;
+import com.example.bob.smilefun.utils.SPUtil;
 
 public class GameActivity extends AppCompatActivity {
 
     private static final String TAG = "GameActivityTAG";
     private LinearLayout containtLayout;
-    private int lineCount=3;
-    private int columnCount=3;
+    private int lineCount;
+    private int columnCount;
     private  AlertDialog successDialog, failDialog;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,13 +44,29 @@ public class GameActivity extends AppCompatActivity {
      * 创建布局
      */
     private void initLayout() {
+        lineCount=SPUtil.build(getApplicationContext()).get(GameSetting.NUM_LINE, GameSetting.COUNT_LINE);
+        columnCount=SPUtil.build(getApplicationContext()).get(GameSetting.NUM_COLUMN, GameSetting.COUNT_COLUMN);
+        //ImageView fit center of Screen
+        int width,height;
+        int screenWidth = MeasureUtil.getScreenWidth(this);
+        int screenHeight = MeasureUtil.getScreenHeight(this);
+        width=screenWidth/columnCount;
+        int heightWithWidth=(int)(width/MeasureUtil.AspectRatio);
+        height=screenHeight/lineCount;
+        int widthWithHeight=(int)(height*MeasureUtil.AspectRatio);
+        if(width<widthWithHeight){
+            height=heightWithWidth;
+        }else{
+            width=widthWithHeight;
+        }
+
         ImageUtil imageUtil=new ImageUtil();
         imageUtil.beginCalculate(lineCount*columnCount);
         containtLayout.removeAllViews();
         for (int i = 0; i < lineCount; i++) {
             LinearLayout rowLayout=createRowLayout();
             for (int j = 0; j < columnCount; j++) {
-                ImageView imageView=createImageView();
+                ImageView imageView=createImageView(width, height);
                 imageUtil.calculate();
                 imageView.setImageResource(imageUtil.getResId());
                 imageView.setOnClickListener(imageUtil.isBingo()?successListener:failListener);
@@ -69,14 +84,12 @@ public class GameActivity extends AppCompatActivity {
     private LinearLayout createRowLayout(){
         LinearLayout rowLayout=new LinearLayout(this);
         rowLayout.setOrientation(LinearLayout.HORIZONTAL);
-        DisplayMetrics dm = getResources().getDisplayMetrics();
-        Log.i(TAG, "GameActivity.createRowLayout: height pixels="+dm.heightPixels);
-        int heightDp = MeasureUtil.convertPixelToDp(this, dm.heightPixels);
-        Log.i(TAG, "GameActivity.createRowLayout: dp="+heightDp);
         LinearLayout.LayoutParams layoutParams=new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT);
         layoutParams.bottomMargin=5;
+        layoutParams.rightMargin=10;
+        layoutParams.leftMargin=10;
         rowLayout.setLayoutParams(layoutParams);
         rowLayout.setGravity(Gravity.CENTER_HORIZONTAL);
         return rowLayout;
@@ -88,13 +101,13 @@ public class GameActivity extends AppCompatActivity {
      * 创建每张图片
      * @return
      */
-    private ImageView createImageView(){
+    private ImageView createImageView(int width, int height){
         ImageView imageView=new ImageView(this);
-        ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(
-                290, 410);
+        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                width, height);
         imageView.setLayoutParams(layoutParams);
-        imageView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-        imageView.setPadding(0,0,2,0);
+        imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        imageView.setPadding(1,0,1,0);
         return imageView;
     }
 
@@ -128,7 +141,8 @@ public class GameActivity extends AppCompatActivity {
     private DialogInterface.OnClickListener exitListener=new DialogInterface.OnClickListener() {
         @Override
         public void onClick(DialogInterface dialog, int which) {
-
+            setResult(RESULT_OK);
+            finish();
         }
     };
 

@@ -10,6 +10,10 @@ import java.lang.reflect.Method;
 import java.math.BigDecimal;
 
 public class MeasureUtil {
+
+    public static final int ImageWidth=295;
+    public static final int ImageHeight=413;
+    public static final double AspectRatio=(double) ImageWidth/(double) ImageHeight;
     /**
      * @ 获取当前手机屏幕的尺寸(单位:像素)
      */
@@ -31,6 +35,8 @@ public class MeasureUtil {
 
 
     private static double mInch = 0;
+    private static int mWidth=0;
+    private static int mHeigth=0;
     /**
      * 获取屏幕尺寸
      * @param context
@@ -40,7 +46,6 @@ public class MeasureUtil {
         if (mInch != 0.0d) {
             return mInch;
         }
-
         try {
             int realWidth = 0, realHeight = 0;
             Display display = context.getWindowManager().getDefaultDisplay();
@@ -71,6 +76,29 @@ public class MeasureUtil {
 
         return mInch;
     }
+
+    public static int getScreenWidth(Activity context){
+//        DisplayMetrics dm = new DisplayMetrics();
+//        context.getWindowManager().getDefaultDisplay().getMetrics(dm);
+        if(mWidth!=0){
+            return mWidth;
+        }
+        DisplayMetrics dm=context.getResources().getDisplayMetrics();
+//        mWidth= convertPixelToDp(context, dm.widthPixels);
+        mWidth= dm.widthPixels;
+        return mWidth;
+    }
+
+    public static int getScreenHeight(Activity context){
+        if(mHeigth!=0){
+           return mHeigth;
+        }
+        DisplayMetrics dm=context.getResources().getDisplayMetrics();
+//        mHeigth= convertPixelToDp(context, dm.heightPixels);
+        mHeigth= dm.heightPixels;
+        return mHeigth;
+    }
+
     /**
      * Double类型保留指定位数的小数，返回double类型（四舍五入）
      * newScale 为指定的位数

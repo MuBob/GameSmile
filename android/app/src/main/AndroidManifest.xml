@@ -21,9 +21,13 @@
         </activity>
         <activity android:name=".view.SettingActivity">
         </activity>
-        <provider
-            android:authorities="com.example.bob.smilefun.db.DBProvider.local"
-            android:name=".db.DBProvider"/>
+
+      <!--  <provider
+            android:name=".db.DBProvider"
+            android:authorities="com.example.bob.smilefun.db.DBProvider.local"/>
+-->
+        <activity android:name=".view.ReadActivity">
+        </activity>
     </application>
 
 </manifest>

@@ -26,6 +26,14 @@ android {
             path "CMakeLists.txt"
         }
     }
+    applicationVariants.all { variant ->
+        variant.outputs.all { output ->
+            def outputFile = output.outputFile
+            if (outputFile != null && outputFile.name.endsWith('.apk')) {
+                outputFileName = "SmileFun_${defaultConfig.versionName}.apk"
+            }
+        }
+    }
 }
 
 dependencies {
