@@ -21,11 +21,10 @@
         </activity>
         <activity android:name=".view.SettingActivity">
         </activity>
-
-      <!--  <provider
+        <provider
             android:name=".db.DBProvider"
-            android:authorities="com.example.bob.smilefun.db.DBProvider.local"/>
--->
+            android:authorities="com.example.bob.smilefun.db.DBProvider.local"
+            android:exported="false"/>
         <activity android:name=".view.ReadActivity">
         </activity>
     </application>
