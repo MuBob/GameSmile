@@ -36,7 +36,13 @@
             android:text="游戏设置"
             android:layout_marginBottom="20dp"
             android:onClick="clickSetting"/>
-
+        <Button
+            android:id="@+id/btn_update"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="检查更新"
+            android:layout_marginBottom="20dp"
+            android:onClick="clickUpdate"/>
 
     </LinearLayout>
 
