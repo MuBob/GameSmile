@@ -227,7 +227,8 @@ public class UpdateManager {
         File file = new File(mContext.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), mHashMap.get("name"));
         request.setDestinationUri(Uri.fromFile(file));
         request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_MOBILE | DownloadManager.Request.NETWORK_WIFI);
-        request.setTitle("SmileFun更新中");
+        request.setTitle(mHashMap.get("name"));
+        request.setDescription("SmileFun正在下载中......");
         request.setAllowedOverRoaming(false);
         request.setVisibleInDownloadsUi(true);
         downloadManager = (DownloadManager) mContext.getSystemService(Context.DOWNLOAD_SERVICE);
