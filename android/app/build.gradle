@@ -6,8 +6,8 @@ android {
         applicationId "com.example.bob.smilefun"
         minSdkVersion 15
         targetSdkVersion 28
-        versionCode 1
-        versionName "1.1"
+        versionCode 2
+        versionName "1.2"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {
@@ -30,7 +30,7 @@ android {
         variant.outputs.all { output ->
             def outputFile = output.outputFile
             if (outputFile != null && outputFile.name.endsWith('.apk')) {
-                outputFileName = "SmileFun_${defaultConfig.versionName}.apk"
+                outputFileName = "SmileFun-${defaultConfig.versionName}.apk"
             }
         }
     }

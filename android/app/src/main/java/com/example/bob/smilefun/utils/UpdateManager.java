@@ -142,7 +142,7 @@ public class UpdateManager {
                     if (serviceCode > versionCode) {
                         return true;
                     } else {
-                        return true;
+                        return false;
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
