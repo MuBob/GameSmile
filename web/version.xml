@@ -1,5 +1,7 @@
-﻿<update>
-<version>1</version>
-<name>SmileFun_1.0</name>
-<url>https://mubob.github.io/GameSmile/android/platforms/release/SmileFun_1.0.apk</url>
+﻿<?xml version="1.0" encoding="utf-8"?>
+<update>
+<version>2</version>
+<name>SmileFun-1.2</name>
+<url>https://mubob.github.io/GameSmile/android/platforms/release/SmileFun-1.2.apk</url>
+<des>增加自动下载功能</des>
 </update>
