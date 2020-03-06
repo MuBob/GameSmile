@@ -1,15 +1,20 @@
 package com.example.bob.smilefun.view;
 
 import android.Manifest;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
@@ -23,34 +28,25 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_READ = 101;
     private static final int REQUEST_GAME = 102;
     private static final int REQUEST_SETTING = 103;
-    private static final int REQUEST_INTERNET = 104;
-    private static final int REQUEST_STORAGE = 105;
+    private static final int REQUEST_PERMISSION_FIRST= 104;
     private static final int REQUEST_INTERNET_UPDATE = 106;
-    private static final String[] permissions_network = new String[]{Manifest.permission.INTERNET, Manifest.permission.ACCESS_NETWORK_STATE};
-    private static final String[] permissions_storage=new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE};
+    private static final int REQUEST_API28_INSTALL = 107;
+    private static final String[] permissions_update = new String[]{Manifest.permission.INTERNET, Manifest.permission.ACCESS_NETWORK_STATE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
     private UpdateManager updateManager;
+    private static final String TAG = "MainActivityTAG";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-    if(checkSelfPermission(Manifest.permission.INTERNET) != PERMISSION_GRANTED){
-        requestPermissions(permissions_network, REQUEST_INTERNET);
-    }else if(checkSelfPermission(Manifest.permission.ACCESS_NETWORK_STATE) != PERMISSION_GRANTED){
-        requestPermissions(permissions_network, REQUEST_INTERNET);
-    }else if(checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PERMISSION_GRANTED){
-        requestPermissions(permissions_storage, REQUEST_STORAGE);
-    }
+            if (checkSelfPermission(Manifest.permission.INTERNET) != PERMISSION_GRANTED
+                    ||checkSelfPermission(Manifest.permission.ACCESS_NETWORK_STATE) != PERMISSION_GRANTED
+                    ||checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PERMISSION_GRANTED) {
+                requestPermissions(permissions_update, REQUEST_PERMISSION_FIRST);
+            }
         }
         updateManager = new UpdateManager(MainActivity.this);
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == REQUEST_GAME) {
-        }
     }
 
     public void clickGameInfo(View view) {
@@ -69,50 +65,92 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void clickUpdate(View view) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ) {
-            if(checkSelfPermission(Manifest.permission.INTERNET) != PERMISSION_GRANTED){
-                requestPermissions(permissions_network, REQUEST_INTERNET_UPDATE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            boolean isInstallPermission = getPackageManager().canRequestPackageInstalls();
+            Log.i(TAG, "MainActivity.clickUpdate: install permission?="+isInstallPermission);
+            if (!isInstallPermission) {
+                new AlertDialog.Builder(this)
+                        .setTitle(R.string.request_permission_install)
+                        .setMessage("请授权SmileFun应用的安装升级权限")
+                        .setPositiveButton(R.string.grant, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.cancel();
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                    Uri packageURI = Uri.parse("package:" + getPackageName());
+                                    Intent intent = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, packageURI);
+                                    startActivityForResult(intent, REQUEST_API28_INSTALL);
+                                }
+                            }
+                        }).setNegativeButton(R.string.cancel, null).show();
+            }else{
+                checkPermissions();
             }
-            if(checkSelfPermission(Manifest.permission.ACCESS_NETWORK_STATE) != PERMISSION_GRANTED){
-                requestPermissions(permissions_network, REQUEST_INTERNET_UPDATE);
-            }
-            if(checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PERMISSION_GRANTED){
-                requestPermissions(permissions_storage, REQUEST_INTERNET_UPDATE);
-            }
-
+        } else {
+            checkPermissions();
         }
-        updateManager.checkUpdate();
+
+    }
+
+    private void checkPermissions() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (checkSelfPermission(Manifest.permission.INTERNET) != PERMISSION_GRANTED
+                    ||checkSelfPermission(Manifest.permission.ACCESS_NETWORK_STATE) != PERMISSION_GRANTED
+                    ||checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PERMISSION_GRANTED) {
+                requestPermissions(permissions_update, REQUEST_INTERNET_UPDATE);
+            }else{
+                checkNetworkToUpdate();
+            }
+        } else {
+            checkNetworkToUpdate();
+        }
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQUEST_INTERNET) {
-            if (grantResults[0] != PERMISSION_GRANTED) {
-                Toast.makeText(MainActivity.this, "应用没有获得网络访问授权，暂时无法检查更新，如需更新应用，请前往\"设置-应用程序-SmileFun\"授权该应用网络访问权限", Toast.LENGTH_LONG).show();
+        if (requestCode == REQUEST_PERMISSION_FIRST) {
+            boolean isGranted=true;
+            for (int i = 0; i < grantResults.length; i++) {
+                if (grantResults[i] != PERMISSION_GRANTED) {
+                    isGranted=false;
+                    break;
+                }
             }
-        }
-        else if(requestCode == REQUEST_STORAGE){
-            if (grantResults[0] != PERMISSION_GRANTED) {
-                Toast.makeText(MainActivity.this, "应用没有获得存储授权，暂时无法检查更新，如需更新应用，请前往\"设置-应用程序-SmileFun\"授权该应用写入存储权限", Toast.LENGTH_LONG).show();
+            if(!isGranted){
+                Toast.makeText(MainActivity.this, R.string.permission_fail_first, Toast.LENGTH_LONG).show();
             }
-        }
-        else if (requestCode == REQUEST_INTERNET_UPDATE) {
-            boolean isGrant=true;
+        } else if (requestCode == REQUEST_INTERNET_UPDATE) {
+            boolean isGrant = true;
             for (int grantResult : grantResults) {
                 if (grantResult != PERMISSION_GRANTED) {
-                    Toast.makeText(MainActivity.this, "应用没有获得相关授权，暂时无法检查更新，如需更新应用，请前往\"设置-应用程序-SmileFun\"授权该应用相关权限", Toast.LENGTH_LONG).show();
+                    Toast.makeText(MainActivity.this, R.string.permission_fail_first, Toast.LENGTH_LONG).show();
                     isGrant = false;
                     break;
                 }
             }
             if (isGrant) {
-                if (isNetworkConnected()) {
-                    updateManager.checkUpdate();
-                } else {
-                    Toast.makeText(MainActivity.this, "网络连接未打开，暂时无法检查更新", Toast.LENGTH_SHORT).show();
-                }
+                checkNetworkToUpdate();
             }
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        Log.i(TAG, "MainActivity.onActivityResult: request="+requestCode);
+        if (requestCode == REQUEST_GAME) {
+        } else if (requestCode == REQUEST_API28_INSTALL) {
+            checkPermissions();
+            Log.i(TAG, "MainActivity.onActivityResult: result="+resultCode);
+        }
+    }
+
+    private void checkNetworkToUpdate() {
+        if (isNetworkConnected()) {
+            updateManager.checkUpdate();
+        } else {
+            Toast.makeText(MainActivity.this, R.string.check_update_fail_no_network, Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -124,4 +162,6 @@ public class MainActivity extends AppCompatActivity {
         }
         return false;
     }
+
+
 }

@@ -62,10 +62,10 @@ public class UpdateManager {
                     break;
                 case DOWNLOAD_FINISH:
                     // 安装文件
-                    installApk();
+                    installApk(mHashMap.get("name"));
                     break;
                 case CHECK_NEW:
-                    Toast.makeText(mContext, "当前软件为最新，没有更新", Toast.LENGTH_LONG).show();
+                    Toast.makeText(mContext, R.string.update_check_last, Toast.LENGTH_LONG).show();
                     break;
                 case CHECK_OLD:
                     showNoticeDialog();
@@ -175,9 +175,9 @@ public class UpdateManager {
      */
     private void showNoticeDialog() {
         AlertDialog.Builder builder = new Builder(mContext);
-        builder.setTitle("SmileFun版本检查");
-        builder.setMessage("有新版本需要联网更新");
-        builder.setPositiveButton("立即更新", new OnClickListener() {
+        builder.setTitle(R.string.update_check);
+        builder.setMessage(R.string.update_check_detail);
+        builder.setPositiveButton(R.string.update_immediately, new OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 dialog.dismiss();
@@ -186,7 +186,7 @@ public class UpdateManager {
                 downloadApk();
             }
         });
-        builder.setNegativeButton("稍后更新", new OnClickListener() {
+        builder.setNegativeButton(R.string.update_later, new OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 dialog.dismiss();
@@ -227,7 +227,8 @@ public class UpdateManager {
         File file = new File(mContext.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), mHashMap.get("name"));
         request.setDestinationUri(Uri.fromFile(file));
         request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_MOBILE | DownloadManager.Request.NETWORK_WIFI);
-        request.setTitle("SmileFun更新中");
+        request.setTitle(mHashMap.get("name"));
+        request.setDescription(mHashMap.get("name")+mContext.getString(R.string.update_downloading));
         request.setAllowedOverRoaming(false);
         request.setVisibleInDownloadsUi(true);
         downloadManager = (DownloadManager) mContext.getSystemService(Context.DOWNLOAD_SERVICE);
@@ -297,18 +298,7 @@ public class UpdateManager {
                                     break;
                                 case DownloadManager.STATUS_SUCCESSFUL:
                                     Log.i(TAG, "DownLoadCompleteReceiver.onReceive: 下载完成");
-                                    Uri uri = null;
-                                    if (Build.VERSION.SDK_INT > Build.VERSION_CODES.M) {
-                                        uri = FileProvider.getUriForFile(mContext, "com.example.bob.smilefun.fileprovider", new File(fileName));
-                                    }else{
-                                        uri=Uri.fromFile(new File(fileName));
-                                    }
-                                    if (uri != null) {
-                                        Intent install = new Intent(Intent.ACTION_VIEW);
-                                        install.setDataAndType(uri, "application/vnd.android.package-archive");
-                                        install.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                        context.startActivity(install);
-                                    }
+                                   installApk(fileName);
                                     mContext.unregisterReceiver(this);
                                     break;
                                 case DownloadManager.STATUS_FAILED:
@@ -328,7 +318,7 @@ public class UpdateManager {
                         }
                     }else {
                         Log.i(TAG, "DownLoadCompleteReceiver.onReceive: 下载取消");
-                        Toast.makeText(mContext, "下载已取消", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(mContext, R.string.download_cancel, Toast.LENGTH_SHORT).show();
                     }
                 }
             }
@@ -399,16 +389,19 @@ public class UpdateManager {
     /**
      * 安装APK文件
      */
-    private void installApk() {
-        File apkfile = new File(mSavePath, mHashMap.get("name"));
-        if (!apkfile.exists()) {
-            return;
+    private void installApk(String fileName) {
+        Uri uri = null;
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.M) {
+            uri = FileProvider.getUriForFile(mContext, mContext.getPackageName() + ".fileprovider", new File(fileName));
+        }else{
+            uri=Uri.fromFile(new File(fileName));
         }
-        // 通过Intent安装APK文件
-        Intent i = new Intent(Intent.ACTION_VIEW);
-        i.setDataAndType(Uri.parse("file://" + apkfile.toString()), "application/vnd.android.package-archive");
-        mContext.startActivity(i);
+        if (uri != null) {
+            Intent install = new Intent(Intent.ACTION_VIEW);
+            install.setDataAndType(uri, "application/vnd.android.package-archive");
+            install.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            install.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION); // 给目标应用一个临时授权
+            mContext.startActivity(install);
+        }
     }
-
-
 }

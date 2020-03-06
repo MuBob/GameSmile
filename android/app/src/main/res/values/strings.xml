@@ -8,4 +8,16 @@
         \t Now come on hurry up! Best wishes to you!\n
         \t Sincerely BobMu.
     </string>
+    <string name="request_permission_install">安装权限申请</string>
+    <string name="permission_fail_first">应用没有获得网络访问或存储授权，暂时无法检查更新，如需更新应用，请前往\"设置-应用程序-SmileFun\"授权该应用相关权限</string>
+    <string name="check_update_fail_no_network">网络连接未打开，暂时无法检查更新</string>
+    <string name="grant">授权</string>
+    <string name="cancel">取消</string>
+    <string name="update_check_last">当前软件版为最新，没有更新</string>
+    <string name="update_check">SmileFun版本检查</string>
+    <string name="update_check_detail">有新版本需要联网更新</string>
+    <string name="update_immediately">立即更新</string>
+    <string name="update_later">稍后更新</string>
+    <string name="update_downloading">正在下载更新中</string>
+    <string name="download_cancel">下载已取消</string>
 </resources>
