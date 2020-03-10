@@ -92,8 +92,8 @@ public class UpdateManager {
     public interface OnUpdateListener{
         void onChecked(int version);
     }
-    private static final String homePath="https://mubob.github.io/GameSmile/";
-    private static final String versionPath = "web/version.xml";
+    private static final String homePath="https://mubob.github.io/GameSmile";
+    private static final String versionPath = "/web/version.xml";
 
     private static final String TAG = "UpdateManagerTAG";
 
