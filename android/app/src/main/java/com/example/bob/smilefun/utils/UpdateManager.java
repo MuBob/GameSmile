@@ -92,7 +92,8 @@ public class UpdateManager {
     public interface OnUpdateListener{
         void onChecked(int version);
     }
-    private static final String path = "https://mubob.github.io/GameSmile/web/version.xml";
+    private static final String homePath="https://mubob.github.io/GameSmile/";
+    private static final String versionPath = "web/version.xml";
 
     private static final String TAG = "UpdateManagerTAG";
 
@@ -105,7 +106,7 @@ public class UpdateManager {
         InputStream inStream = null;
         HttpURLConnection conn = null;
         try {
-            URL url = new URL(path);
+            URL url = new URL(homePath+versionPath);
             conn = (HttpURLConnection) url.openConnection();
             int responseCode = conn.getResponseCode();
             Log.i(TAG, "UpdateManager.isUpdate: code=" + responseCode);
@@ -219,7 +220,11 @@ public class UpdateManager {
     private void downloadApk() {
         // 启动新线程下载软件
 //        new downloadApkThread().start();
-        DownloadManager.Request request = new DownloadManager.Request(Uri.parse(mHashMap.get("url")));
+        String urlPath = mHashMap.get("url");
+        if(!urlPath.startsWith(homePath)){
+            urlPath=homePath+urlPath;
+        }
+        DownloadManager.Request request = new DownloadManager.Request(Uri.parse(urlPath));
         File file = new File(mContext.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), mHashMap.get("name"));
         request.setDestinationUri(Uri.fromFile(file));
         request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_MOBILE | DownloadManager.Request.NETWORK_WIFI);
@@ -334,7 +339,11 @@ public class UpdateManager {
                     // 获得存储卡的路径
                     String sdpath = Environment.getExternalStorageDirectory() + "/";
                     mSavePath = sdpath + "download";
-                    URL url = new URL(mHashMap.get("url"));
+                    String urlPath = mHashMap.get("url");
+                    if(!urlPath.startsWith(homePath)){
+                        urlPath=homePath+urlPath;
+                    }
+                    URL url = new URL(urlPath);
                     // 创建连接
                     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                     conn.connect();
