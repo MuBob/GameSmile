@@ -139,7 +139,7 @@ public class MainActivity extends AppCompatActivity implements UpdateManager.OnU
                 checkNetworkToUpdate();
             }else{
                 Toast.makeText(MainActivity.this, R.string.permission_fail_first, Toast.LENGTH_LONG).show();
-                findViewById(R.id.btn_update).setEnabled(false);
+                findViewById(R.id.btn_update).setEnabled(true);
             }
         }
     }
@@ -160,7 +160,7 @@ public class MainActivity extends AppCompatActivity implements UpdateManager.OnU
             updateManager.checkUpdate(this);
         } else {
             Toast.makeText(MainActivity.this, R.string.check_update_fail_no_network, Toast.LENGTH_SHORT).show();
-            findViewById(R.id.btn_update).setEnabled(false);
+            findViewById(R.id.btn_update).setEnabled(true);
         }
     }
 
@@ -183,7 +183,7 @@ public class MainActivity extends AppCompatActivity implements UpdateManager.OnU
         }else{
             Toast.makeText(this, R.string.update_check_last, Toast.LENGTH_LONG).show();
         }
-        findViewById(R.id.btn_update).setEnabled(false);
+        findViewById(R.id.btn_update).setEnabled(true);
     }
 
 }
