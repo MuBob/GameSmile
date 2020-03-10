@@ -2,6 +2,6 @@
 <update>
 <version>3</version>
 <name>SmileFun-1.3</name>
-<url>https://mubob.github.io/GameSmile/android/platforms/release/SmileFun-1.3.apk</url>
+<url>../android/platforms/release/SmileFun-1.3.apk</url>
 <des>保存历史记录并展示</des>
 </update>
