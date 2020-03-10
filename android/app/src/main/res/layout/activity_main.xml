@@ -19,28 +19,35 @@
             android:id="@+id/btn_info"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="游戏介绍"
+            android:text="@string/main_des"
             android:layout_marginBottom="20dp"
             android:onClick="clickGameInfo"/>
         <Button
             android:id="@+id/btn_start"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="开始游戏"
+            android:text="@string/main_start"
             android:layout_marginBottom="20dp"
             android:onClick="clickStartGame"/>
+        <Button
+            android:id="@+id/btn_history"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/main_history"
+            android:layout_marginBottom="20dp"
+            android:onClick="clickHistory"/>
         <Button
             android:id="@+id/btn_setting"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="游戏设置"
+            android:text="@string/main_setting"
             android:layout_marginBottom="20dp"
             android:onClick="clickSetting"/>
         <Button
             android:id="@+id/btn_update"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="检查更新"
+            android:text="@string/main_check"
             android:layout_marginBottom="20dp"
             android:onClick="clickUpdate"/>
 

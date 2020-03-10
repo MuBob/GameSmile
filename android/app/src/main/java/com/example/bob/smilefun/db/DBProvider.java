@@ -9,6 +9,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.text.TextUtils;
 
 public class DBProvider extends ContentProvider {
 
@@ -16,10 +17,13 @@ public class DBProvider extends ContentProvider {
     private UriMatcher matcher;
     public final static String AUTHORITY="com.example.bob.smilefun.db.DBProvider.local";
     private final int URI_CODE_INFO=1;
+    private final int URI_CODE_INFO_ID=2;
 
+    private static final String TAG = "GameActivityTAG";
     private UriMatcher initMatcherByTableNames(){
         UriMatcher matcher = new UriMatcher(UriMatcher.NO_MATCH);
         matcher.addURI(AUTHORITY, GameInfo.TABLE_NAME, URI_CODE_INFO);
+        matcher.addURI(AUTHORITY, GameInfo.TABLE_NAME+"/#", URI_CODE_INFO_ID);
         return matcher;
     }
 
@@ -28,12 +32,26 @@ public class DBProvider extends ContentProvider {
         String tableName=null;
         switch (match){
             case URI_CODE_INFO:
+            case URI_CODE_INFO_ID:
                 tableName=GameInfo.TABLE_NAME;
                 break;
             default:
                 break;
         }
         return tableName;
+    }
+
+    private long getIdByURI(@NonNull Uri uri){
+        int match = matcher.match(uri);
+        long parseId=-1;
+        switch (match){
+            case URI_CODE_INFO_ID:
+                parseId=ContentUris.parseId(uri);
+                break;
+            default:
+                break;
+        }
+        return parseId;
     }
 
     @Override
@@ -49,6 +67,14 @@ public class DBProvider extends ContentProvider {
     public Cursor query( @NonNull Uri uri,  @Nullable String[] projection,  @Nullable String selection,  @Nullable String[] selectionArgs,  @Nullable String sortOrder) {
         Cursor query=null;
         String tableName = getTableNameByURI(uri);
+        long parseId = getIdByURI(uri);
+        if(parseId>0){
+            if (TextUtils.isEmpty(selection)) {
+                selection = String.format("%s = %d", GameInfo.COL_ID, parseId);
+            } else {
+                selection = String.format("%s and %s = %d", selection, GameInfo.COL_ID, parseId);
+            }
+        }
         if(tableName!=null){
             try {
                 query=mDb.query(tableName, projection, selection, selectionArgs, null, null, sortOrder);
@@ -56,7 +82,8 @@ public class DBProvider extends ContentProvider {
                 e.printStackTrace();
             }
         }
-        return query;    }
+        return query;
+    }
 
     @Nullable
     @Override
@@ -80,6 +107,14 @@ public class DBProvider extends ContentProvider {
     @Override
     public int delete( @NonNull Uri uri,  @Nullable String selection,  @Nullable String[] selectionArgs) {
         String tableName = getTableNameByURI(uri);
+        long parseId = getIdByURI(uri);
+        if(parseId>0){
+            if (TextUtils.isEmpty(selection)) {
+                selection = String.format("%s = %d", GameInfo.COL_ID, parseId);
+            } else {
+                selection = String.format("%s and %s = %d", selection, GameInfo.COL_ID, parseId);
+            }
+        }
         int delete=-1;
         if(tableName!=null){
             delete= mDb.delete(tableName, selection, selectionArgs);
@@ -91,9 +126,19 @@ public class DBProvider extends ContentProvider {
     public int update( @NonNull Uri uri,  @Nullable ContentValues values,  @Nullable String selection,  @Nullable String[] selectionArgs) {
         int update=-1;
         String tableName = getTableNameByURI(uri);
+        long parseId = getIdByURI(uri);
+        if(parseId>0){
+            if (TextUtils.isEmpty(selection)) {
+                selection = String.format("%s = %d", GameInfo.COL_ID, parseId);
+            } else {
+                selection = String.format("%s and %s = %d", selection, GameInfo.COL_ID, parseId);
+            }
+        }
         if(tableName!=null){
             update=mDb.update(tableName, values, selection, selectionArgs);
         }
         return update;
     }
+
+
 }

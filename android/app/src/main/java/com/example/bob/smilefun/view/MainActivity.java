@@ -23,14 +23,15 @@ import com.example.bob.smilefun.utils.UpdateManager;
 
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements UpdateManager.OnUpdateListener{
 
     private static final int REQUEST_READ = 101;
     private static final int REQUEST_GAME = 102;
-    private static final int REQUEST_SETTING = 103;
-    private static final int REQUEST_PERMISSION_FIRST= 104;
-    private static final int REQUEST_INTERNET_UPDATE = 106;
-    private static final int REQUEST_API28_INSTALL = 107;
+    private static final int REQUEST_HISTORY = 103;
+    private static final int REQUEST_SETTING = 104;
+    private static final int REQUEST_PERMISSION_FIRST= 110;
+    private static final int REQUEST_INTERNET_UPDATE = 111;
+    private static final int REQUEST_API28_INSTALL = 112;
     private static final String[] permissions_update = new String[]{Manifest.permission.INTERNET, Manifest.permission.ACCESS_NETWORK_STATE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
     private UpdateManager updateManager;
     private static final String TAG = "MainActivityTAG";
@@ -59,19 +60,25 @@ public class MainActivity extends AppCompatActivity {
         startActivityForResult(intent, REQUEST_GAME);
     }
 
+    public void clickHistory(View view) {
+        Intent intent = new Intent(this, HistoryActivity.class);
+        startActivityForResult(intent, REQUEST_HISTORY);
+    }
+
     public void clickSetting(View view) {
         Intent intent = new Intent(this, SettingActivity.class);
         startActivityForResult(intent, REQUEST_SETTING);
     }
 
     public void clickUpdate(View view) {
+        findViewById(R.id.btn_update).setEnabled(false);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             boolean isInstallPermission = getPackageManager().canRequestPackageInstalls();
             Log.i(TAG, "MainActivity.clickUpdate: install permission?="+isInstallPermission);
             if (!isInstallPermission) {
                 new AlertDialog.Builder(this)
                         .setTitle(R.string.request_permission_install)
-                        .setMessage("请授权SmileFun应用的安装升级权限")
+                        .setMessage(R.string.msg_permission_install)
                         .setPositiveButton(R.string.grant, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
@@ -124,13 +131,15 @@ public class MainActivity extends AppCompatActivity {
             boolean isGrant = true;
             for (int grantResult : grantResults) {
                 if (grantResult != PERMISSION_GRANTED) {
-                    Toast.makeText(MainActivity.this, R.string.permission_fail_first, Toast.LENGTH_LONG).show();
-                    isGrant = false;
+                     isGrant = false;
                     break;
                 }
             }
             if (isGrant) {
                 checkNetworkToUpdate();
+            }else{
+                Toast.makeText(MainActivity.this, R.string.permission_fail_first, Toast.LENGTH_LONG).show();
+                findViewById(R.id.btn_update).setEnabled(false);
             }
         }
     }
@@ -148,13 +157,14 @@ public class MainActivity extends AppCompatActivity {
 
     private void checkNetworkToUpdate() {
         if (isNetworkConnected()) {
-            updateManager.checkUpdate();
+            updateManager.checkUpdate(this);
         } else {
             Toast.makeText(MainActivity.this, R.string.check_update_fail_no_network, Toast.LENGTH_SHORT).show();
+            findViewById(R.id.btn_update).setEnabled(false);
         }
     }
 
-    public boolean isNetworkConnected() {
+    private boolean isNetworkConnected() {
         ConnectivityManager mConnectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo mNetworkInfo = mConnectivityManager.getActiveNetworkInfo();
         if (mNetworkInfo != null) {
@@ -163,5 +173,17 @@ public class MainActivity extends AppCompatActivity {
         return false;
     }
 
+
+    @Override
+    public void onChecked(int version) {
+        int versionCode = updateManager.getVersionCode(this);
+        Log.i(TAG, "MainActivity.onChecked: cur version="+versionCode+", service version="+version);
+        if(version>versionCode){
+            updateManager.showNoticeDialog();
+        }else{
+            Toast.makeText(this, R.string.update_check_last, Toast.LENGTH_LONG).show();
+        }
+        findViewById(R.id.btn_update).setEnabled(false);
+    }
 
 }

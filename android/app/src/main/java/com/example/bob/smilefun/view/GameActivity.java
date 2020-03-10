@@ -47,19 +47,19 @@ public class GameActivity extends AppCompatActivity {
         gameInfo=new GameInfo();
         initLayout();
         AlertDialog.Builder successBuilder = new AlertDialog.Builder(GameActivity.this);
-        successBuilder.setNegativeButton("退出", exitListener);
-        successBuilder.setPositiveButton("下一关", nextListener);
-        successBuilder.setTitle("恭喜您");
+        successBuilder.setNegativeButton(R.string.exist, exitListener);
+        successBuilder.setPositiveButton(R.string.next_level, nextListener);
+        successBuilder.setTitle(R.string.title_success);
         successDialog = successBuilder.create();
         AlertDialog.Builder failBuilder = new AlertDialog.Builder(GameActivity.this);
-        failBuilder.setNegativeButton("退出", exitListener);
-        failBuilder.setPositiveButton("重新开始", retryListener);
-        failBuilder.setTitle("抱歉");
+        failBuilder.setNegativeButton(R.string.exist, exitListener);
+        failBuilder.setPositiveButton(R.string.retry, retryListener);
+        failBuilder.setTitle(R.string.title_fail);
         failDialog = failBuilder.create();
         AlertDialog.Builder existBuild = new AlertDialog.Builder(GameActivity.this);
-        existBuild.setNegativeButton("点错了", null);
-        existBuild.setPositiveButton("确定", exitListener);
-        existBuild.setTitle("确定现在就结束游戏吗？");
+        existBuild.setNegativeButton(R.string.exist_false, null);
+        existBuild.setPositiveButton(R.string.exist_success, exitListener);
+        existBuild.setTitle(R.string.title_exist);
         existDialog = existBuild.create();
         timer = new Timer();
         task = new TimerTask() {
@@ -76,7 +76,7 @@ public class GameActivity extends AppCompatActivity {
                 if(msg.what==1){
                     if(gameInfo.getState()==GameInfo.STATE_RUNING){
                         gameInfo.setLevelTime(gameInfo.getLevelTime() + 1);
-                        timeText.setText("用时："+gameInfo.getLevelTime()+"秒");
+                        timeText.setText(String.format(getString(R.string.game_time_d),gameInfo.getLevelTime()));
                     }
                     return true;
                 }
@@ -92,9 +92,10 @@ public class GameActivity extends AppCompatActivity {
     private void initLayout() {
         gameInfo.setLevel(gameInfo.getLevel() + 1);
         saveGameInfo();
-        levelText.setText("当前关卡："+gameInfo.getLevel());
+        levelText.setText(String.format(getString(R.string.cur_level_d), gameInfo.getLevel()));
         int lineCount = SPUtil.build(getApplicationContext()).get(PreferenceSetting.NUM_LINE, PreferenceSetting.COUNT_LINE);
         int columnCount = SPUtil.build(getApplicationContext()).get(PreferenceSetting.NUM_COLUMN, PreferenceSetting.COUNT_COLUMN);
+        gameInfo.setDifficult(lineCount, columnCount);
         //ImageView fit center of Screen
         int width, height;
         int screenWidth = MeasureUtil.getScreenWidth(this);
@@ -109,7 +110,7 @@ public class GameActivity extends AppCompatActivity {
             width = widthWithHeight;
         }
 
-        ImageUtil imageUtil = new ImageUtil();
+        ImageUtil imageUtil = new ImageUtil(this);
         imageUtil.beginCalculate(lineCount * columnCount);
         containtLayout.removeAllViews();
         for (int i = 0; i < lineCount; i++) {
@@ -127,13 +128,14 @@ public class GameActivity extends AppCompatActivity {
     }
 
     private void saveGameInfo() {
+        Log.i(TAG, "GameActivity.saveGameInfo: save game info="+gameInfo);
         if(gameInfo.getState()==GameInfo.STATE_START){
             gameInfo.setState(GameInfo.STATE_RUNING);
             gameInfo.setStartTime(System.currentTimeMillis());
             Uri insert = getContentResolver().insert(GameInfo.URI_INFO, gameInfo.getCV());
             long id = ContentUris.parseId(insert);
             if(id<0){
-                Toast.makeText(GameActivity.this, "无法保存游戏记录，请联系开发人员", Toast.LENGTH_SHORT).show();
+                Toast.makeText(GameActivity.this, R.string.faile_save_record, Toast.LENGTH_SHORT).show();
             }
             gameInfo.setId(id);
         }else if(gameInfo.getState()==GameInfo.STATE_RUNING){
@@ -143,7 +145,7 @@ public class GameActivity extends AppCompatActivity {
         }else if(gameInfo.getState()==GameInfo.STATE_END){
             gameInfo.setEndTime(System.currentTimeMillis());
             if(gameInfo.getId()>=0){
-                getContentResolver().update(ContentUris.withAppendedId(GameInfo.URI_INFO,gameInfo.getId()), gameInfo.getCV(),null, null);
+                getContentResolver().update(ContentUris.withAppendedId(GameInfo.URI_INFO, gameInfo.getId()), gameInfo.getCV(),null, null);
             }
         }
     }
@@ -185,14 +187,14 @@ public class GameActivity extends AppCompatActivity {
     View.OnClickListener successListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            successDialog.setMessage("当前第" + (gameInfo.getLevel()) + "关已通过");
+            successDialog.setMessage(String.format(getString(R.string.success_level_d), gameInfo.getLevel()));
             successDialog.show();
         }
     };
     View.OnClickListener failListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            failDialog.setMessage("您在第" + (gameInfo.getLevel()) + "关已失误");
+            failDialog.setMessage(String.format(getString(R.string.fail_level_d), gameInfo.getLevel()));
             failDialog.show();
         }
     };

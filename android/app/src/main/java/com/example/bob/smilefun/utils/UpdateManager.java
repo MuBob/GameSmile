@@ -38,8 +38,7 @@ import java.util.HashMap;
 public class UpdateManager {
     private static final int DOWNLOAD = 1;
     private static final int DOWNLOAD_FINISH = 2;
-    private static final int CHECK_OLD = 3;
-    private static final int CHECK_NEW = 4;
+    private static final int CHECKED_VERSION= 3;
     HashMap<String, String> mHashMap;
     private String mSavePath;
     private int progress;
@@ -64,11 +63,10 @@ public class UpdateManager {
                     // 安装文件
                     installApk(mHashMap.get("name"));
                     break;
-                case CHECK_NEW:
-                    Toast.makeText(mContext, R.string.update_check_last, Toast.LENGTH_LONG).show();
-                    break;
-                case CHECK_OLD:
-                    showNoticeDialog();
+                case CHECKED_VERSION:
+                    if(onUpdateListener!=null){
+                        onUpdateListener.onChecked(msg.arg1);
+                    }
                     break;
                 default:
                     break;
@@ -85,10 +83,15 @@ public class UpdateManager {
     /**
      * 检测软件更新
      */
-    public void checkUpdate() {
+    public void checkUpdate(OnUpdateListener listener) {
+        this.onUpdateListener=listener;
         new checkUpdateThread().start();
     }
 
+    private OnUpdateListener onUpdateListener;
+    public interface OnUpdateListener{
+        void onChecked(int version);
+    }
     private static final String path = "https://mubob.github.io/GameSmile/web/version.xml";
 
     private static final String TAG = "UpdateManagerTAG";
@@ -98,8 +101,7 @@ public class UpdateManager {
      *
      * @return
      */
-    private boolean isUpdate() {
-        int versionCode = getVersionCode(mContext);
+    private int isUpdate() {
         InputStream inStream = null;
         HttpURLConnection conn = null;
         try {
@@ -137,20 +139,14 @@ public class UpdateManager {
             if (null != mHashMap) {
                 try {
                     int serviceCode = Integer.valueOf(mHashMap.get("version"));
-                    Log.i(TAG, "UpdateManager.isUpdate: serviceVersion=" + serviceCode + ", cur version=" + versionCode);
-                    // 版本判断
-                    if (serviceCode > versionCode) {
-                        return true;
-                    } else {
-                        return false;
-                    }
+                    return serviceCode;
                 } catch (Exception e) {
                     e.printStackTrace();
                     Log.e(TAG, "UpdateManager.isUpdate:Exception e=" + e.getMessage());
                 }
             }
         }
-        return false;
+        return 0;
     }
 
     /**
@@ -159,7 +155,7 @@ public class UpdateManager {
      * @param context
      * @return
      */
-    private int getVersionCode(Context context) {
+    public int getVersionCode(Context context) {
         int versionCode = 0;
         try {
             // 获取软件版本号，对应AndroidManifest.xml下android:versionCode
@@ -173,7 +169,7 @@ public class UpdateManager {
     /**
      * 显示软件更新对话框
      */
-    private void showNoticeDialog() {
+    public void showNoticeDialog() {
         AlertDialog.Builder builder = new Builder(mContext);
         builder.setTitle(R.string.update_check);
         builder.setMessage(R.string.update_check_detail);
@@ -243,11 +239,11 @@ public class UpdateManager {
     private class checkUpdateThread extends Thread {
         @Override
         public void run() {
-            if (isUpdate()) {
-                mHandler.sendEmptyMessage(CHECK_OLD);
-            } else {
-                mHandler.sendEmptyMessage(CHECK_NEW);
-            }
+            int versionCode = isUpdate();
+            Message message = mHandler.obtainMessage();
+            message.what=CHECKED_VERSION;
+            message.arg1=versionCode;
+            mHandler.sendMessage(message);
         }
     }
 
