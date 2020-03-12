@@ -21,7 +21,7 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ItemView
     private List<GameInfo> list;
 
     public HistoryAdapter(Context context, List<GameInfo> list) {
-        this.context=context;
+        this.context = context;
         this.list = list;
     }
 
@@ -34,31 +34,34 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ItemView
     @Override
     public void onBindViewHolder(ItemView holder, int position) {
         GameInfo gameInfo = list.get(position);
-        Log.i(TAG, "HistoryAdapter.onBindViewHolder: position="+position+", gameInfo="+gameInfo);
+        Log.i(TAG, "HistoryAdapter.onBindViewHolder: position=" + position + ", gameInfo=" + gameInfo);
+        holder.indexText.setText(String.valueOf(position + 1));
+        holder.dateText.setText(DateUtil.getFormat(gameInfo.getStartTime()));
+        holder.levelText.setText(String.valueOf(gameInfo.getLevel() - 1));
         if(gameInfo.getState()==GameInfo.STATE_END){
-            holder.indexText.setText(String.valueOf(position+1));
-            holder.dateText.setText(DateUtil.getFormat(gameInfo.getStartTime()));
-            holder.levelText.setText(String.valueOf(gameInfo.getLevel()));
             holder.timeText.setText(DateUtil.getDuration(gameInfo.getStartTime(), gameInfo.getEndTime()));
-            holder.difficultText.setText(String.format("%dx%d", gameInfo.getDifficultLine(), gameInfo.getDifficultRow()));
+        }else{
+            holder.timeText.setText("--");
         }
+        holder.difficultText.setText(String.format("%dx%d", gameInfo.getDifficultLine(), gameInfo.getDifficultRow()));
     }
 
 
     @Override
     public int getItemCount() {
-        return list==null?0:list.size();
+        return list == null ? 0 : list.size();
     }
 
-    public class ItemView extends RecyclerView.ViewHolder{
+    public class ItemView extends RecyclerView.ViewHolder {
         private TextView indexText, dateText, levelText, timeText, difficultText;
+
         public ItemView(View itemView) {
             super(itemView);
-            indexText=itemView.findViewById(R.id.item_record_index);
-            dateText=itemView.findViewById(R.id.item_record_date);
-            levelText=itemView.findViewById(R.id.item_record_level);
-            timeText=itemView.findViewById(R.id.item_record_time);
-            difficultText=itemView.findViewById(R.id.item_record_difficult);
+            indexText = itemView.findViewById(R.id.item_record_index);
+            dateText = itemView.findViewById(R.id.item_record_date);
+            levelText = itemView.findViewById(R.id.item_record_level);
+            timeText = itemView.findViewById(R.id.item_record_time);
+            difficultText = itemView.findViewById(R.id.item_record_difficult);
         }
     }
 

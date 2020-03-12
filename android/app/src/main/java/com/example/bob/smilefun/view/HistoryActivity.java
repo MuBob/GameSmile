@@ -13,6 +13,7 @@ import com.example.bob.smilefun.R;
 import com.example.bob.smilefun.db.GameInfo;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class HistoryActivity extends AppCompatActivity {
@@ -84,6 +85,7 @@ public class HistoryActivity extends AppCompatActivity {
                     query.close();
                 }
             }
+            Collections.reverse(historyList);
             handler.sendEmptyMessage(1);
         }
     }

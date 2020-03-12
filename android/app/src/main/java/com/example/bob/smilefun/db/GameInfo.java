@@ -8,11 +8,12 @@ import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.annotation.IntDef;
+import android.support.annotation.NonNull;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
-public class GameInfo implements Parcelable{
+public class GameInfo implements Parcelable, Comparable<GameInfo>{
     public static final String TABLE_NAME="info";
     public static final String COL_ID="_id";
     public static final String COL_LEVEL="level";
@@ -76,6 +77,11 @@ public class GameInfo implements Parcelable{
         dest.writeInt(state);
         dest.writeInt(difficultLine);
         dest.writeInt(difficultRow);
+    }
+
+    @Override
+    public int compareTo(@NonNull GameInfo o) {
+        return  id>o.id?1:-1;
     }
 
     @IntDef({STATE_START, STATE_RUNING, STATE_END})

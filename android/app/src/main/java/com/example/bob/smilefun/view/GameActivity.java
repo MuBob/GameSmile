@@ -11,6 +11,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.ScaleAnimation;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -36,16 +38,26 @@ public class GameActivity extends AppCompatActivity {
     private Timer timer;
     private TimerTask task;
     private Handler timerHandler;
+    private ScaleAnimation animHide, animShow;
+    private ImageUtil imageUtil;
+    private SPUtil spUtil;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_game);
         containtLayout = findViewById(R.id.ll_containt);
-        levelText=findViewById(R.id.tv_level);
-        timeText=findViewById(R.id.tv_time);
-        gameInfo=new GameInfo();
-        initLayout();
+        levelText = findViewById(R.id.tv_level);
+        timeText = findViewById(R.id.tv_time);
+        gameInfo = new GameInfo();
+
+        animHide = new ScaleAnimation(1.0f, 0.0f, 1.0f, 1.0f, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
+        animHide.setDuration(500);
+        animShow = new ScaleAnimation(0.0f, 1.0f, 1.0f, 1.0f, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
+        animShow.setDuration(500);
+
+        imageUtil = new ImageUtil(this);
+        spUtil= SPUtil.build(getApplicationContext());
         AlertDialog.Builder successBuilder = new AlertDialog.Builder(GameActivity.this);
         successBuilder.setNegativeButton(R.string.exist, exitListener);
         successBuilder.setPositiveButton(R.string.next_level, nextListener);
@@ -66,24 +78,33 @@ public class GameActivity extends AppCompatActivity {
             @Override
             public void run() {
                 Message message = timerHandler.obtainMessage();
-                message.what=1;
+                message.what = 1;
                 timerHandler.sendMessage(message);
             }
         };
-        timerHandler=new Handler(new Handler.Callback() {
+        timerHandler = new Handler(new Handler.Callback() {
             @Override
             public boolean handleMessage(Message msg) {
-                if(msg.what==1){
-                    if(gameInfo.getState()==GameInfo.STATE_RUNING){
+                if (msg.what == 1) {
+                    if (gameInfo.getState() == GameInfo.STATE_RUNING) {
                         gameInfo.setLevelTime(gameInfo.getLevelTime() + 1);
-                        timeText.setText(String.format(getString(R.string.game_time_d),gameInfo.getLevelTime()));
+                        timeText.setText(String.format(getString(R.string.game_time_d), gameInfo.getLevelTime()));
                     }
                     return true;
+                } else if (msg.what == 2) {
+                    ImageView imageView = (ImageView) msg.obj;
+                    imageUtil.calculate();
+                    imageView.setImageResource(imageUtil.getResId());
+                    imageView.setOnClickListener(imageUtil.isBingo() ? successListener : failListener);
+                    imageView.startAnimation(animShow);
+                }else if(msg.what==3){
+                    imageUtil.endCalculate();
                 }
                 return false;
             }
         });
-        timer.schedule(task,0,1000);
+        timer.schedule(task, 0, 1000);
+        initLayout();
     }
 
     /**
@@ -93,8 +114,8 @@ public class GameActivity extends AppCompatActivity {
         gameInfo.setLevel(gameInfo.getLevel() + 1);
         saveGameInfo();
         levelText.setText(String.format(getString(R.string.cur_level_d), gameInfo.getLevel()));
-        int lineCount = SPUtil.build(getApplicationContext()).get(PreferenceSetting.NUM_LINE, PreferenceSetting.COUNT_LINE);
-        int columnCount = SPUtil.build(getApplicationContext()).get(PreferenceSetting.NUM_COLUMN, PreferenceSetting.COUNT_COLUMN);
+        int lineCount =generateLines();
+        int columnCount=generateColumns();
         gameInfo.setDifficult(lineCount, columnCount);
         //ImageView fit center of Screen
         int width, height;
@@ -110,44 +131,112 @@ public class GameActivity extends AppCompatActivity {
             width = widthWithHeight;
         }
 
-        ImageUtil imageUtil = new ImageUtil(this);
         imageUtil.beginCalculate(lineCount * columnCount);
-        containtLayout.removeAllViews();
-        for (int i = 0; i < lineCount; i++) {
-            LinearLayout rowLayout = createRowLayout();
-            for (int j = 0; j < columnCount; j++) {
-                ImageView imageView = createImageView(width, height);
-                imageUtil.calculate();
-                imageView.setImageResource(imageUtil.getResId());
-                imageView.setOnClickListener(imageUtil.isBingo() ? successListener : failListener);
-                rowLayout.addView(imageView);
+        boolean isNew = true;
+        int oldLines = containtLayout.getChildCount();
+        if (oldLines == lineCount) {
+            isNew = false;
+            for (int i = 0; i < oldLines; i++) {
+                LinearLayout rowLayout = (LinearLayout) containtLayout.getChildAt(i);
+                int oldColumn = rowLayout.getChildCount();
+                if (oldColumn == columnCount) {
+                    isNew = false;
+                } else {
+                    isNew = true;
+                    break;
+                }
             }
-            containtLayout.addView(rowLayout);
+        } else {
+            isNew = true;
         }
-        imageUtil.endCalculate();
+        if (isNew) {
+            containtLayout.removeAllViews();
+            for (int i = 0; i < lineCount; i++) {
+                LinearLayout rowLayout = createRowLayout();
+                for (int j = 0; j < columnCount; j++) {
+                    ImageView imageView = createImageView(width, height);
+                    imageUtil.calculate();
+                    imageView.setImageResource(imageUtil.getResId());
+                    imageView.setOnClickListener(imageUtil.isBingo() ? successListener : failListener);
+                    rowLayout.addView(imageView);
+                    imageView.startAnimation(animShow);
+                }
+                containtLayout.addView(rowLayout);
+            }
+            imageUtil.endCalculate();
+        } else {
+            for (int i = 0; i < lineCount; i++) {
+                LinearLayout rowLayout = (LinearLayout) containtLayout.getChildAt(i);
+                for (int j = 0; j < columnCount; j++) {
+                    ImageView imageView = (ImageView) rowLayout.getChildAt(j);
+                    imageView.startAnimation(animHide);
+                    Message message = timerHandler.obtainMessage();
+                    message.obj = imageView;
+                    message.what = 2;
+                    timerHandler.sendMessageDelayed(message, animHide.getDuration());
+                }
+            }
+            Message message = timerHandler.obtainMessage();
+            message.what=3;
+            timerHandler.sendMessageDelayed(message, animHide.getDuration());
+        }
     }
 
     private void saveGameInfo() {
-        Log.i(TAG, "GameActivity.saveGameInfo: save game info="+gameInfo);
-        if(gameInfo.getState()==GameInfo.STATE_START){
+        Log.i(TAG, "GameActivity.saveGameInfo: save game info=" + gameInfo);
+        if (gameInfo.getState() == GameInfo.STATE_START) {
             gameInfo.setState(GameInfo.STATE_RUNING);
             gameInfo.setStartTime(System.currentTimeMillis());
             Uri insert = getContentResolver().insert(GameInfo.URI_INFO, gameInfo.getCV());
             long id = ContentUris.parseId(insert);
-            if(id<0){
+            if (id < 0) {
                 Toast.makeText(GameActivity.this, R.string.faile_save_record, Toast.LENGTH_SHORT).show();
             }
             gameInfo.setId(id);
-        }else if(gameInfo.getState()==GameInfo.STATE_RUNING){
-            if(gameInfo.getId()>=0){
-                getContentResolver().update(ContentUris.withAppendedId(GameInfo.URI_INFO,gameInfo.getId()), gameInfo.getCV(),null, null);
+        } else if (gameInfo.getState() == GameInfo.STATE_RUNING) {
+            if (gameInfo.getId() >= 0) {
+                getContentResolver().update(ContentUris.withAppendedId(GameInfo.URI_INFO, gameInfo.getId()), gameInfo.getCV(), null, null);
             }
-        }else if(gameInfo.getState()==GameInfo.STATE_END){
+        } else if (gameInfo.getState() == GameInfo.STATE_END) {
             gameInfo.setEndTime(System.currentTimeMillis());
-            if(gameInfo.getId()>=0){
-                getContentResolver().update(ContentUris.withAppendedId(GameInfo.URI_INFO, gameInfo.getId()), gameInfo.getCV(),null, null);
+            if (gameInfo.getId() >= 0) {
+                getContentResolver().update(ContentUris.withAppendedId(GameInfo.URI_INFO, gameInfo.getId()), gameInfo.getCV(), null, null);
             }
         }
+    }
+
+    private int difficulty=-1;
+    private int lineCount=-1;
+    private int columnCount=-1;
+
+    /**
+     * 根据难度计算不同关卡中的图片行数
+     * @return
+     */
+    private int generateLines(){
+        if(difficulty<0){
+            difficulty=spUtil.get(PreferenceSetting.GAME_DIFFICULTY, PreferenceSetting.MAX_DIFFICULTY%PreferenceSetting.MAX_DIFFICULTY);
+        }
+        if(lineCount<0){
+            lineCount=spUtil.get(PreferenceSetting.NUM_LINE, PreferenceSetting.COUNT_LINE);
+        }
+        lineCount+=gameInfo.getLevel()/(50/(2*difficulty+1));
+        return lineCount;
+    }
+
+    /**
+     * 根据难度计算不同关卡中的图片列数
+     * @return
+     */
+    private int generateColumns(){
+        if(difficulty<0){
+            difficulty=spUtil.get(PreferenceSetting.GAME_DIFFICULTY, PreferenceSetting.MAX_DIFFICULTY%PreferenceSetting.MAX_DIFFICULTY);
+        }
+        if(columnCount<0){
+            columnCount=spUtil.get(PreferenceSetting.NUM_COLUMN, PreferenceSetting.COUNT_COLUMN);
+        }
+        columnCount+=gameInfo.getLevel()/(100/(2*difficulty+1));
+        return columnCount;
     }
 
     /**
@@ -187,8 +276,9 @@ public class GameActivity extends AppCompatActivity {
     View.OnClickListener successListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            successDialog.setMessage(String.format(getString(R.string.success_level_d), gameInfo.getLevel()));
-            successDialog.show();
+//            successDialog.setMessage(String.format(getString(R.string.success_level_d), gameInfo.getLevel()));
+//            successDialog.show();
+            initLayout();
         }
     };
     View.OnClickListener failListener = new View.OnClickListener() {
