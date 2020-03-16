@@ -51,6 +51,14 @@ public class UpdateManager {
     private DownloadManager downloadManager;
     private long downloadId;
 
+    private static final String GithubHome="https://mubob.github.io/GameSmile/web";
+    private static final String GiteeHome="https://mubob.gitee.io/GameSmile";
+    private static final String versionPath = "/version.xml";
+    private String homePath;
+
+    private static final String TAG = "UpdateManagerTAG";
+
+
     private Handler mHandler = new Handler() {
         public void handleMessage(Message msg) {
             switch (msg.what) {
@@ -85,17 +93,33 @@ public class UpdateManager {
      */
     public void checkUpdate(OnUpdateListener listener) {
         this.onUpdateListener=listener;
-        new checkUpdateThread().start();
+        AlertDialog.Builder builder = new Builder(mContext);
+        builder.setTitle(R.string.update_check);
+        builder.setMessage(R.string.update_check_network);
+        builder.setPositiveButton(R.string.update_immediately_global, new OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+                homePath=GithubHome;
+                new checkUpdateThread().start();
+            }
+        });
+        builder.setNeutralButton(R.string.update_immediately_local, new OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+                homePath=GiteeHome;
+                new checkUpdateThread().start();
+            }
+        });
+        Dialog noticeDialog = builder.create();
+        noticeDialog.show();
     }
 
     private OnUpdateListener onUpdateListener;
     public interface OnUpdateListener{
         void onChecked(int version);
     }
-    private static final String homePath="https://mubob.github.io/GameSmile";
-    private static final String versionPath = "/web/version.xml";
-
-    private static final String TAG = "UpdateManagerTAG";
 
     /**
      * 检查软件是否有更新版本
@@ -160,7 +184,7 @@ public class UpdateManager {
         int versionCode = 0;
         try {
             // 获取软件版本号，对应AndroidManifest.xml下android:versionCode
-            versionCode = context.getPackageManager().getPackageInfo("com.example.bob.smilefun", 0).versionCode;
+            versionCode = context.getPackageManager().getPackageInfo(context.getPackageName(), 0).versionCode;
         } catch (NameNotFoundException e) {
             e.printStackTrace();
         }
@@ -174,18 +198,11 @@ public class UpdateManager {
         AlertDialog.Builder builder = new Builder(mContext);
         builder.setTitle(R.string.update_check);
         builder.setMessage(R.string.update_check_detail);
-        builder.setPositiveButton(R.string.update_immediately_global, new OnClickListener() {
+        builder.setPositiveButton(R.string.update_immediately, new OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 dialog.dismiss();
-                downloadApk(mHashMap.get("url_github"));
-            }
-        });
-        builder.setNeutralButton(R.string.update_immediately_local, new OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-                downloadApk(mHashMap.get("url_gitee"));
+                downloadApk(homePath);
             }
         });
         builder.setNegativeButton(R.string.update_later, new OnClickListener() {
@@ -338,6 +355,7 @@ public class UpdateManager {
     /**
      * 下载文件线程
      */
+    @Deprecated
     private class downloadApkThread extends Thread {
         @Override
         public void run() {
