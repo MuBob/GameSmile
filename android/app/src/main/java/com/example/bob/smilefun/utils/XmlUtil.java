@@ -39,8 +39,16 @@ public class XmlUtil {
                     hashMap.put("name", childElement.getFirstChild().getNodeValue());
                 }
                 //下载地址
-                else if (("url".equals(childElement.getNodeName()))) {
-                    hashMap.put("url", childElement.getFirstChild().getNodeValue());
+                else if (("path".equals(childElement.getNodeName()))) {
+                    hashMap.put("path", childElement.getFirstChild().getNodeValue());
+                }
+                //Github下载路径
+                else if (("url_github".equals(childElement.getNodeName()))) {
+                    hashMap.put("url_github", childElement.getFirstChild().getNodeValue());
+                }
+                //Gitee下载路径
+                else if (("url_gitee".equals(childElement.getNodeName()))) {
+                    hashMap.put("url_gitee", childElement.getFirstChild().getNodeValue());
                 }
             }
         }

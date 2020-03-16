@@ -18,6 +18,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.bob.smilefun.BuildConfig;
 import com.example.bob.smilefun.R;
 import com.example.bob.smilefun.db.GameInfo;
 import com.example.bob.smilefun.db.PreferenceSetting;
@@ -37,7 +38,7 @@ public class GameActivity extends AppCompatActivity {
     private GameInfo gameInfo;
     private Timer timer;
     private TimerTask task;
-    private Handler timerHandler;
+    private Handler timerHandler, animHandler;
     private ScaleAnimation animHide, animShow;
     private ImageUtil imageUtil;
     private SPUtil spUtil;
@@ -104,6 +105,23 @@ public class GameActivity extends AppCompatActivity {
             }
         });
         timer.schedule(task, 0, 1000);
+        animHandler=new Handler(new Handler.Callback() {
+            @Override
+            public boolean handleMessage(Message msg) {
+                if (msg.what == 2) {
+                    ImageView imageView = (ImageView) msg.obj;
+                    imageUtil.calculate();
+                    imageView.setImageResource(imageUtil.getResId());
+                    imageView.setOnClickListener(imageUtil.isBingo() ? successListener : failListener);
+                    imageView.startAnimation(animShow);
+                    return true;
+                }else if(msg.what==3){
+                    imageUtil.endCalculate();
+                    return true;
+                }
+                return false;
+            }
+        });
         initLayout();
     }
 
@@ -120,7 +138,7 @@ public class GameActivity extends AppCompatActivity {
         //ImageView fit center of Screen
         int width, height;
         int screenWidth = MeasureUtil.getScreenWidth(this);
-        int screenHeight = MeasureUtil.getScreenHeight(this);
+        int screenHeight = MeasureUtil.getScreenHeight(this)-50;
         width = screenWidth / columnCount;
         int heightWithWidth = (int) (width / MeasureUtil.AspectRatio);
         height = screenHeight / lineCount;
@@ -170,20 +188,23 @@ public class GameActivity extends AppCompatActivity {
                 for (int j = 0; j < columnCount; j++) {
                     ImageView imageView = (ImageView) rowLayout.getChildAt(j);
                     imageView.startAnimation(animHide);
-                    Message message = timerHandler.obtainMessage();
+                    Message message = animHandler.obtainMessage();
                     message.obj = imageView;
                     message.what = 2;
-                    timerHandler.sendMessageDelayed(message, animHide.getDuration());
+                    animHandler.sendMessageDelayed(message, animHide.getDuration());
                 }
             }
-            Message message = timerHandler.obtainMessage();
+            Message message = animHandler.obtainMessage();
             message.what=3;
-            timerHandler.sendMessageDelayed(message, animHide.getDuration());
+            animHandler.sendMessageDelayed(message, animHide.getDuration());
         }
     }
 
     private void saveGameInfo() {
         Log.i(TAG, "GameActivity.saveGameInfo: save game info=" + gameInfo);
+        if(BuildConfig.DEBUG){
+            return;
+        }
         if (gameInfo.getState() == GameInfo.STATE_START) {
             gameInfo.setState(GameInfo.STATE_RUNING);
             gameInfo.setStartTime(System.currentTimeMillis());
@@ -220,7 +241,7 @@ public class GameActivity extends AppCompatActivity {
         if(lineCount<0){
             lineCount=spUtil.get(PreferenceSetting.NUM_LINE, PreferenceSetting.COUNT_LINE);
         }
-        lineCount+=gameInfo.getLevel()/(50/(2*difficulty+1));
+//        lineCount+=gameInfo.getLevel()/(100/(2*difficulty+1));
         return lineCount;
     }
 
@@ -235,7 +256,7 @@ public class GameActivity extends AppCompatActivity {
         if(columnCount<0){
             columnCount=spUtil.get(PreferenceSetting.NUM_COLUMN, PreferenceSetting.COUNT_COLUMN);
         }
-        columnCount+=gameInfo.getLevel()/(100/(2*difficulty+1));
+//        columnCount+=gameInfo.getLevel()/(100/(2*difficulty+1));
         return columnCount;
     }
 

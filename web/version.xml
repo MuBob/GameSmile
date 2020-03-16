@@ -1,8 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <update>
-<version>4</version>
-<name>SmileFun-1.4</name>
-<path>/platforms/release/SmileFun-1.4.apk</path>
-<url>https://mubob.github.io/GameSmile/web/platforms/release/SmileFun-1.4.apk</url>
-<des>增加关卡难易修改；优化通关后刷新界面；</des>
+<version>5</version>
+<name>SmileFun-1.5</name>
+<path>/platforms/release/SmileFun-1.5.apk</path>
+<url_github>https://mubob.github.io/GameSmile/web</url_github>
+<url_gitee>http://mubob.gitee.io/gamesmile</url_gitee>
+<url>https://mubob.github.io/GameSmile/web/platforms/release/SmileFun-1.5.apk</url>
+<des>下载地址更新为Github和Gitee两个；<br>修复游戏界面卡顿；<br>更新笑脸图片库</des>
 </update>

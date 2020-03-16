@@ -16,7 +16,8 @@
     <string name="update_check_last">当前软件版为最新，没有更新</string>
     <string name="update_check">SmileFun版本检查</string>
     <string name="update_check_detail">有新版本需要联网更新</string>
-    <string name="update_immediately">立即更新</string>
+    <string name="update_immediately_global">全球更新</string>
+    <string name="update_immediately_local">国内更新</string>
     <string name="update_later">稍后更新</string>
     <string name="update_downloading">正在下载更新中</string>
     <string name="download_cancel">下载已取消</string>

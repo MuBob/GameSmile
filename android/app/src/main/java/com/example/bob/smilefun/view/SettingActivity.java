@@ -49,6 +49,26 @@ public class SettingActivity extends AppCompatActivity implements RadioGroup.OnC
 
     @Override
     public void onCheckedChanged(RadioGroup group, int checkedId) {
-        preDifficulty=checkedId-1;
+        switch (checkedId){
+            case R.id.rb_difficulty_1:
+                preDifficulty=0;
+                etLine.setText(String.valueOf(3));
+                etColumn.setText(String.valueOf(2));
+                break;
+            case R.id.rb_difficulty_2:
+                preDifficulty=1;
+                etLine.setText(String.valueOf(4));
+                etColumn.setText(String.valueOf(3));
+                break;
+            case R.id.rb_difficulty_3:
+                preDifficulty=2;
+                etLine.setText(String.valueOf(5));
+                etColumn.setText(String.valueOf(4));
+                break;
+                default:
+                    preDifficulty=0;
+                    break;
+        }
     }
+
 }

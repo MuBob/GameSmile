@@ -174,13 +174,18 @@ public class UpdateManager {
         AlertDialog.Builder builder = new Builder(mContext);
         builder.setTitle(R.string.update_check);
         builder.setMessage(R.string.update_check_detail);
-        builder.setPositiveButton(R.string.update_immediately, new OnClickListener() {
+        builder.setPositiveButton(R.string.update_immediately_global, new OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 dialog.dismiss();
-                // 显示下载对话框
-//                showDownloadDialog();
-                downloadApk();
+                downloadApk(mHashMap.get("url_github"));
+            }
+        });
+        builder.setNeutralButton(R.string.update_immediately_local, new OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+                downloadApk(mHashMap.get("url_gitee"));
             }
         });
         builder.setNegativeButton(R.string.update_later, new OnClickListener() {
@@ -217,10 +222,13 @@ public class UpdateManager {
     /**
      * 下载apk文件
      */
-    private void downloadApk() {
+    private void downloadApk(String homePath) {
         // 启动新线程下载软件
 //        new downloadApkThread().start();
-        String urlPath = mHashMap.get("url");
+        String urlPath = mHashMap.get("path");
+        if(homePath==null||homePath.isEmpty()){
+            homePath=this.homePath;
+        }
         if(!urlPath.startsWith(homePath)){
             urlPath=homePath+urlPath;
         }
@@ -339,7 +347,7 @@ public class UpdateManager {
                     // 获得存储卡的路径
                     String sdpath = Environment.getExternalStorageDirectory() + "/";
                     mSavePath = sdpath + "download";
-                    String urlPath = mHashMap.get("url");
+                    String urlPath = mHashMap.get("url_github");
                     if(!urlPath.startsWith(homePath)){
                         urlPath=homePath+urlPath;
                     }
