@@ -11,8 +11,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
-import android.view.animation.Animation;
-import android.view.animation.ScaleAnimation;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -23,6 +21,7 @@ import com.example.bob.smilefun.R;
 import com.example.bob.smilefun.db.GameInfo;
 import com.example.bob.smilefun.db.PreferenceSetting;
 import com.example.bob.smilefun.utils.ImageUtil;
+import com.example.bob.smilefun.utils.ImageViewShowAnimation;
 import com.example.bob.smilefun.utils.MeasureUtil;
 import com.example.bob.smilefun.utils.SPUtil;
 
@@ -38,8 +37,7 @@ public class GameActivity extends AppCompatActivity {
     private GameInfo gameInfo;
     private Timer timer;
     private TimerTask task;
-    private Handler timerHandler, animHandler;
-    private ScaleAnimation animHide, animShow;
+    private Handler timerHandler;
     private ImageUtil imageUtil;
     private SPUtil spUtil;
 
@@ -52,13 +50,8 @@ public class GameActivity extends AppCompatActivity {
         timeText = findViewById(R.id.tv_time);
         gameInfo = new GameInfo();
 
-        animHide = new ScaleAnimation(1.0f, 0.0f, 1.0f, 1.0f, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
-        animHide.setDuration(500);
-        animShow = new ScaleAnimation(0.0f, 1.0f, 1.0f, 1.0f, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
-        animShow.setDuration(500);
-
         imageUtil = new ImageUtil(this);
-        spUtil= SPUtil.build(getApplicationContext());
+        spUtil = SPUtil.build(getApplicationContext());
         AlertDialog.Builder successBuilder = new AlertDialog.Builder(GameActivity.this);
         successBuilder.setNegativeButton(R.string.exist, exitListener);
         successBuilder.setPositiveButton(R.string.next_level, nextListener);
@@ -92,36 +85,11 @@ public class GameActivity extends AppCompatActivity {
                         timeText.setText(String.format(getString(R.string.game_time_d), gameInfo.getLevelTime()));
                     }
                     return true;
-                } else if (msg.what == 2) {
-                    ImageView imageView = (ImageView) msg.obj;
-                    imageUtil.calculate();
-                    imageView.setImageResource(imageUtil.getResId());
-                    imageView.setOnClickListener(imageUtil.isBingo() ? successListener : failListener);
-                    imageView.startAnimation(animShow);
-                }else if(msg.what==3){
-                    imageUtil.endCalculate();
                 }
                 return false;
             }
         });
         timer.schedule(task, 0, 1000);
-        animHandler=new Handler(new Handler.Callback() {
-            @Override
-            public boolean handleMessage(Message msg) {
-                if (msg.what == 2) {
-                    ImageView imageView = (ImageView) msg.obj;
-                    imageUtil.calculate();
-                    imageView.setImageResource(imageUtil.getResId());
-                    imageView.setOnClickListener(imageUtil.isBingo() ? successListener : failListener);
-                    imageView.startAnimation(animShow);
-                    return true;
-                }else if(msg.what==3){
-                    imageUtil.endCalculate();
-                    return true;
-                }
-                return false;
-            }
-        });
         initLayout();
     }
 
@@ -132,13 +100,13 @@ public class GameActivity extends AppCompatActivity {
         gameInfo.setLevel(gameInfo.getLevel() + 1);
         saveGameInfo();
         levelText.setText(String.format(getString(R.string.cur_level_d), gameInfo.getLevel()));
-        int lineCount =generateLines();
-        int columnCount=generateColumns();
+        int lineCount = generateLines();
+        int columnCount = generateColumns();
         gameInfo.setDifficult(lineCount, columnCount);
         //ImageView fit center of Screen
         int width, height;
         int screenWidth = MeasureUtil.getScreenWidth(this);
-        int screenHeight = MeasureUtil.getScreenHeight(this)-50;
+        int screenHeight = MeasureUtil.getScreenHeight(this) - 50;
         width = screenWidth / columnCount;
         int heightWithWidth = (int) (width / MeasureUtil.AspectRatio);
         height = screenHeight / lineCount;
@@ -149,7 +117,6 @@ public class GameActivity extends AppCompatActivity {
             width = widthWithHeight;
         }
 
-        imageUtil.beginCalculate(lineCount * columnCount);
         boolean isNew = true;
         int oldLines = containtLayout.getChildCount();
         if (oldLines == lineCount) {
@@ -167,42 +134,39 @@ public class GameActivity extends AppCompatActivity {
         } else {
             isNew = true;
         }
+        imageUtil.beginCalculate(lineCount * columnCount);
         if (isNew) {
             containtLayout.removeAllViews();
             for (int i = 0; i < lineCount; i++) {
                 LinearLayout rowLayout = createRowLayout();
                 for (int j = 0; j < columnCount; j++) {
-                    ImageView imageView = createImageView(width, height);
                     imageUtil.calculate();
-                    imageView.setImageResource(imageUtil.getResId());
-                    imageView.setOnClickListener(imageUtil.isBingo() ? successListener : failListener);
+                    ImageView imageView = createImageView(width, height);
+                    new ImageViewShowAnimation(imageView).execute(
+                            imageUtil.getResId(),
+                            imageUtil.isBingo() ? successListener : failListener);
                     rowLayout.addView(imageView);
-                    imageView.startAnimation(animShow);
                 }
                 containtLayout.addView(rowLayout);
             }
-            imageUtil.endCalculate();
         } else {
             for (int i = 0; i < lineCount; i++) {
                 LinearLayout rowLayout = (LinearLayout) containtLayout.getChildAt(i);
                 for (int j = 0; j < columnCount; j++) {
+                    imageUtil.calculate();
                     ImageView imageView = (ImageView) rowLayout.getChildAt(j);
-                    imageView.startAnimation(animHide);
-                    Message message = animHandler.obtainMessage();
-                    message.obj = imageView;
-                    message.what = 2;
-                    animHandler.sendMessageDelayed(message, animHide.getDuration());
+                    new ImageViewShowAnimation(imageView).execute(
+                            imageUtil.getResId(),
+                            imageUtil.isBingo() ? successListener : failListener);
                 }
             }
-            Message message = animHandler.obtainMessage();
-            message.what=3;
-            animHandler.sendMessageDelayed(message, animHide.getDuration());
         }
+        imageUtil.endCalculate();
     }
 
     private void saveGameInfo() {
         Log.i(TAG, "GameActivity.saveGameInfo: save game info=" + gameInfo);
-        if(BuildConfig.DEBUG){
+        if (BuildConfig.DEBUG) {
             return;
         }
         if (gameInfo.getState() == GameInfo.STATE_START) {
@@ -226,37 +190,44 @@ public class GameActivity extends AppCompatActivity {
         }
     }
 
-    private int difficulty=-1;
-    private int lineCount=-1;
-    private int columnCount=-1;
+    private int difficulty = -1;
+    private int lineCount = -1;
+    private int columnCount = -1;
+    private boolean autoDifficult = false;
 
     /**
      * 根据难度计算不同关卡中的图片行数
+     *
      * @return
      */
-    private int generateLines(){
-        if(difficulty<0){
-            difficulty=spUtil.get(PreferenceSetting.GAME_DIFFICULTY, PreferenceSetting.MAX_DIFFICULTY%PreferenceSetting.MAX_DIFFICULTY);
+    private int generateLines() {
+        if (difficulty < 0) {
+            difficulty = spUtil.get(PreferenceSetting.GAME_DIFFICULTY, PreferenceSetting.MAX_DIFFICULTY % PreferenceSetting.MAX_DIFFICULTY);
         }
-        if(lineCount<0){
-            lineCount=spUtil.get(PreferenceSetting.NUM_LINE, PreferenceSetting.COUNT_LINE);
+        if (lineCount < 0) {
+            lineCount = spUtil.get(PreferenceSetting.NUM_LINE, PreferenceSetting.COUNT_LINE);
         }
-//        lineCount+=gameInfo.getLevel()/(100/(2*difficulty+1));
+        if (autoDifficult) {
+            lineCount += gameInfo.getLevel() / (100 / (2 * difficulty + 1));
+        }
         return lineCount;
     }
 
     /**
      * 根据难度计算不同关卡中的图片列数
+     *
      * @return
      */
-    private int generateColumns(){
-        if(difficulty<0){
-            difficulty=spUtil.get(PreferenceSetting.GAME_DIFFICULTY, PreferenceSetting.MAX_DIFFICULTY%PreferenceSetting.MAX_DIFFICULTY);
+    private int generateColumns() {
+        if (difficulty < 0) {
+            difficulty = spUtil.get(PreferenceSetting.GAME_DIFFICULTY, PreferenceSetting.MAX_DIFFICULTY % PreferenceSetting.MAX_DIFFICULTY);
         }
-        if(columnCount<0){
-            columnCount=spUtil.get(PreferenceSetting.NUM_COLUMN, PreferenceSetting.COUNT_COLUMN);
+        if (columnCount < 0) {
+            columnCount = spUtil.get(PreferenceSetting.NUM_COLUMN, PreferenceSetting.COUNT_COLUMN);
         }
-//        columnCount+=gameInfo.getLevel()/(100/(2*difficulty+1));
+        if (autoDifficult) {
+            columnCount += gameInfo.getLevel() / (100 / (2 * difficulty + 1));
+        }
         return columnCount;
     }
 
